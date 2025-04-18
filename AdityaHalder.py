@@ -368,6 +368,24 @@ async def manual_check(_, message: Message):
     status = await check_cookies()
     await message.reply("✅ Cookies alive." if status else "❌ Cookies dead.")
 
+# ===== COMMAND TO FORCE SET COOKIES =====
+@bot.on_message(filters.command("setcookies", prefixes=["/", "!", "%", ",", ".", "@", "#"]))
+async def force_update_cookies(_, message: Message):
+    await message.reply("♻️ Generating new cookies...")
+    try:
+        new_cookies = await login_and_get_cookies()
+
+        with open(FILE_PATH, "w", encoding="utf-8") as f:
+            f.write(new_cookies)
+
+        await update_github_file(new_cookies)
+        await message.reply("✅ Cookies updated and pushed to GitHub.")
+
+        # VPS auto pull and restart
+        await pull_and_restart()
+    except Exception as e:
+        await message.reply(f"❌ Failed to set new cookies: {e}")
+        
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
 
