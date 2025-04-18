@@ -319,8 +319,11 @@ async def update_github_file(new_content: str):
 
     async with httpx.AsyncClient() as client:
         r = await client.get(url + f"?ref={BRANCH}", headers=headers)
-        sha = r.json()["sha"]
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if r.status_code == 200:
+            sha = r.json()["sha"]
+            else:
+                sha = None  # File doesn't exist, will be created
+                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         data = {
             "message": f"Auto-update cookies.txt [{now}]",
