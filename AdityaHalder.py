@@ -1,6 +1,6 @@
 import aiohttp, aiofiles, asyncio, base64, logging
-import os, platform, random, re, socket
-import sys, time, textwrap, yt_dlp
+import os, platform, random, re, socket, datetime
+import sys, time, textwrap, yt_dlp, httpx
 
 from os import getenv
 from io import BytesIO
@@ -12,14 +12,7 @@ from typing import Union, List, Pattern
 from logging.handlers import RotatingFileHandler
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
-import os
-import sys
-import httpx
-import base64
-import asyncio
-import subprocess
-from datetime import datetime
-from config import GITHUB_TOKEN
+from  import datetime
 from pyrogram import filters
 from pyrogram.types import Message
 from yt_dlp import YoutubeDL
@@ -96,6 +89,7 @@ if os.path.exists("Config.env"):
 API_ID = int(getenv("API_ID", 0))
 API_HASH = getenv("API_HASH", None)
 BOT_TOKEN = getenv("BOT_TOKEN", None)
+GITHUB_TOKEN = getenv("GITHUB_TOKEN", None)
 STRING_SESSION = getenv("STRING_SESSION", None)
 MONGO_DB_URL = getenv("MONGO_DB_URL", None)
 OWNER_ID = int(getenv("OWNER_ID", "7775584890"))
