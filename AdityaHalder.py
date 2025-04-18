@@ -19,7 +19,7 @@ import base64
 import asyncio
 import subprocess
 from datetime import datetime
-
+from config import GITHUB_TOKEN
 from pyrogram import filters
 from pyrogram.types import Message
 from yt_dlp import YoutubeDL
@@ -242,7 +242,6 @@ async def main():
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
 # ====== CONFIG ======
-GITHUB_TOKEN = "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"
 REPO = "TheSachinOp/mini"
 BRANCH = "aditya"
 FILE_PATH = "cookies.txt"
