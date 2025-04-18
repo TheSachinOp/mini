@@ -233,10 +233,10 @@ async def main():
     except Exception as e:
         LOGGER.info(f"🚫 PyTgCalls Error: {e}")
         sys.exit()
-    LOGGER.info("✅ PyTgCalls Started.")
+    LOGGER.info("✅ Assistant Started.")
     await asyncio.sleep(1)
     LOGGER.info("✅ Sucessfully Hosted Your Bot !!")
-    LOGGER.info("✅ Now Do Visit: @AdityaServer !!")
+    LOGGER.info("✅ Now Do Visit: @Sanatani_Tech !!")
     await idle()
     
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
@@ -273,14 +273,18 @@ async def login_and_get_cookies():
             await page.goto("https://accounts.google.com/signin/v2/identifier?service=youtube")
             await page.fill("input[type='email']", EMAIL)
             await page.click("button:has-text('Next')")
+            await page.wait_for_timeout(3000)
 
-            await page.wait_for_selector("input[type='password']", timeout=30000, state="attached")
-            await page.fill("input[type='password']", PASSWORD)
-            await page.click("button:has-text('Next')")
+            try:
+                await page.wait_for_selector("input[type='password']", timeout=30000, state="attached")
+                await page.fill("input[type='password']", PASSWORD)
+                await page.click("button:has-text('Next')")
+            except PlaywrightTimeoutError:
+                raise Exception("Password input not found — possible CAPTCHA or incorrect email.")
 
             await page.wait_for_url("https://www.youtube.com/*", timeout=60000)
-            cookies = await context.cookies("https://www.youtube.com")
 
+            cookies = await context.cookies("https://www.youtube.com")
             await browser.close()
 
             lines = [
@@ -288,6 +292,7 @@ async def login_and_get_cookies():
                 "# http://curl.haxx.se/rfc/cookie_spec.html",
                 "# This is a generated file!  Do not edit.\n"
             ]
+
             for cookie in cookies:
                 domain = cookie['domain']
                 flag = "TRUE" if domain.startswith(".") else "FALSE"
@@ -297,6 +302,7 @@ async def login_and_get_cookies():
                 name = cookie['name']
                 value = cookie['value']
                 lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
+
             return "\n".join(lines)
 
         except Exception as e:
@@ -331,7 +337,7 @@ async def update_github_file(new_content: str):
             "branch": BRANCH,
             "committer": {
                 "name": "CookieBot",
-                "email": "princexrajput@gmail.com"
+                "email": "bot@example.com"
             },
             "content": base64.b64encode(new_content.encode()).decode(),
             "sha": sha
@@ -341,7 +347,7 @@ async def update_github_file(new_content: str):
         update.raise_for_status()
         return update.json()
 
-# ===== COOKIE AUTO CHECK =====
+# ===== ALERT ON EXPIRY =====
 async def send_alert():
     is_alive = await check_cookies()
 
@@ -349,6 +355,7 @@ async def send_alert():
         await bot.send_message(OWNER_ID, "✅ Cookies are alive.")
     else:
         await bot.send_message(OWNER_ID, "⚠️ Cookies expired. Replacing...")
+
         try:
             new_cookies = await login_and_get_cookies()
             with open(FILE_PATH, "w", encoding="utf-8") as f:
@@ -385,11 +392,13 @@ async def force_update(_, message: Message):
 async def generate_and_dm(_, message: Message):
     if message.from_user.id != OWNER_ID:
         return await message.reply("🚫 Unauthorized")
+
     await message.reply("⏳ Generating fresh cookies...")
     try:
         cookies = await login_and_get_cookies()
         with open("cookies.txt", "w", encoding="utf-8") as f:
             f.write(cookies)
+
         await bot.send_document(OWNER_ID, "cookies.txt", caption="✅ Here's your fresh cookies.txt file.")
     except Exception as e:
         await message.reply(f"❌ Failed to generate cookies: {e}")
