@@ -263,7 +263,10 @@ async def pull_and_restart():
 async def login_and_get_cookies():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
-        context = await browser.new_context()
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+            locale="en-US"
+        )
         page = await context.new_page()
 
         try:
@@ -271,7 +274,7 @@ async def login_and_get_cookies():
             await page.fill("input[type='email']", EMAIL)
             await page.click("button:has-text('Next')")
 
-            await page.wait_for_selector("input[type='password']", timeout=30000)
+            await page.wait_for_selector("input[type='password']", timeout=30000, state="attached")
             await page.fill("input[type='password']", PASSWORD)
             await page.click("button:has-text('Next')")
 
