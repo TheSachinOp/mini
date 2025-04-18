@@ -12,9 +12,12 @@ from typing import Union, List, Pattern
 from logging.handlers import RotatingFileHandler
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 import os
+import sys
 import httpx
 import base64
 import asyncio
+import subprocess
+from datetime import datetime
 from pyrogram import filters
 from pyrogram.types import Message
 from yt_dlp import YoutubeDL
@@ -237,15 +240,25 @@ async def main():
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
 # ====== CONFIG ======
-GITHUB_TOKEN = "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"
+
+GITHUB_TOKEN = "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"
 REPO = "ItsSanatani/Music"
 BRANCH = "aditya"
 FILE_PATH = "cookies.txt"
 
-# ===== LOGIN & COOKIES GENERATOR =====
 EMAIL = "princexrajput@gmail.com"
 PASSWORD = "SACHINx007"
 
+# ===== AUTO PULL & RESTART FUNCTION =====
+async def pull_and_restart():
+    try:
+        subprocess.run(["git", "reset", "--hard"], check=True)
+        subprocess.run(["git", "pull"], check=True)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+    except Exception as e:
+        print(f"Failed to pull and restart: {e}")
+
+# ===== LOGIN & COOKIES GENERATOR =====
 async def login_and_get_cookies():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -255,11 +268,9 @@ async def login_and_get_cookies():
         await page.goto("https://accounts.google.com/signin/v2/identifier?service=youtube")
         await page.fill("input[type='email']", EMAIL)
         await page.click("button:has-text('Next')")
-
         await page.wait_for_selector("input[type='password']", timeout=60000)
         await page.fill("input[type='password']", PASSWORD)
         await page.click("button:has-text('Next')")
-
         await page.wait_for_url("https://www.youtube.com/*", timeout=60000)
 
         cookies = await context.cookies("https://www.youtube.com")
@@ -297,7 +308,7 @@ async def check_cookies():
     except Exception:
         return False
 
-# ===== UPDATE GITHUB FILE =====
+# ===== UPDATE GITHUB FILE (PUSH SYSTEM) =====
 async def update_github_file(new_content: str):
     url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
     headers = {
@@ -310,8 +321,10 @@ async def update_github_file(new_content: str):
         r.raise_for_status()
         sha = r.json()["sha"]
 
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         data = {
-            "message": "Auto-update cookies.txt",
+            "message": f"Auto-update cookies.txt [{now}]",
             "branch": BRANCH,
             "committer": {
                 "name": "CookieBot",
@@ -325,7 +338,7 @@ async def update_github_file(new_content: str):
         update.raise_for_status()
         return update.json()
 
-# ===== ALERT & UPDATE IF NEEDED =====
+# ===== ALERT & AUTO UPDATE IF COOKIES DEAD =====
 async def send_alert():
     is_alive = await check_cookies()
 
@@ -341,11 +354,15 @@ async def send_alert():
                 f.write(new_cookies)
 
             await update_github_file(new_cookies)
-            await bot.send_message(OWNER_ID, "✅ New cookies uploaded to GitHub.")
-        except Exception as e:
-            await bot.send_message(OWNER_ID, f"❌ Failed to update cookies: {e}")
+            await bot.send_message(OWNER_ID, "✅ New cookies pushed to GitHub.")
 
-# ===== TELEGRAM COMMAND =====
+            # VPS auto pull and restart
+            await pull_and_restart()
+
+        except Exception as e:
+            await bot.send_message(OWNER_ID, f"❌ Cookie update failed: {e}")
+
+# ===== TELEGRAM COMMAND FOR MANUAL CHECK =====
 @bot.on_message(filters.command("cookies", prefixes=["/", "!", "%", ",", ".", "@", "#"]))
 async def manual_check(_, message: Message):
     status = await check_cookies()
