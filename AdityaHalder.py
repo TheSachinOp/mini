@@ -242,7 +242,7 @@ async def main():
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
 # ====== CONFIG ======
-GITHUB_TOKEN = "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"
+GITHUB_TOKEN = "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"
 REPO = "TheSachinOp/mini"
 BRANCH = "aditya"
 FILE_PATH = "cookies.txt"
