@@ -19,11 +19,11 @@ import base64
 import asyncio
 import subprocess
 from datetime import datetime
+
 from pyrogram import filters
 from pyrogram.types import Message
 from yt_dlp import YoutubeDL
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from playwright.async_api import async_playwright
 
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 from git import Repo
@@ -250,7 +250,8 @@ FILE_PATH = "cookies.txt"
 EMAIL = "princexrajput@gmail.com"
 PASSWORD = "SACHINx007"
 
-# ===== RESTART FUNCTION =====
+# ================== RESTART FUNCTION ==================
+
 async def pull_and_restart():
     try:
         subprocess.run(["git", "reset", "--hard"], check=True)
@@ -259,57 +260,45 @@ async def pull_and_restart():
     except Exception as e:
         print(f"Failed to pull and restart: {e}")
 
-# ===== LOGIN & COOKIES GENERATOR =====
+# ================ SESSION LOGIN COOKIE HANDLER ================
+
 async def login_and_get_cookies():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-            locale="en-US"
-        )
-        page = await context.new_page()
+    async with Client("session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION) as app:
+        await app.get_me()
 
-        try:
-            await page.goto("https://accounts.google.com/signin/v2/identifier?service=youtube")
-            await page.fill("input[type='email']", EMAIL)
-            await page.click("button:has-text('Next')")
-            await page.wait_for_timeout(3000)
-
-            try:
-                await page.wait_for_selector("input[type='password']", timeout=30000, state="attached")
-                await page.fill("input[type='password']", PASSWORD)
-                await page.click("button:has-text('Next')")
-            except PlaywrightTimeoutError:
-                raise Exception("Password input not found — possible CAPTCHA or incorrect email.")
-
-            await page.wait_for_url("https://www.youtube.com/*", timeout=60000)
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
+            context = await browser.new_context()
+            page = await context.new_page()
+            await page.goto("https://www.youtube.com")
+            await page.wait_for_timeout(5000)
 
             cookies = await context.cookies("https://www.youtube.com")
             await browser.close()
 
-            lines = [
-                "# Netscape HTTP Cookie File",
-                "# http://curl.haxx.se/rfc/cookie_spec.html",
-                "# This is a generated file!  Do not edit.\n"
-            ]
+            return convert_to_netscape_format(cookies)
 
-            for cookie in cookies:
-                domain = cookie['domain']
-                flag = "TRUE" if domain.startswith(".") else "FALSE"
-                path = cookie['path']
-                secure = "TRUE" if cookie.get('secure') else "FALSE"
-                expiry = int(cookie.get('expires', 0))
-                name = cookie['name']
-                value = cookie['value']
-                lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
+# ================ COOKIE FORMAT CONVERTER ================
 
-            return "\n".join(lines)
+def convert_to_netscape_format(cookies):
+    lines = [
+        "# Netscape HTTP Cookie File",
+        "# http://curl.haxx.se/rfc/cookie_spec.html",
+        "# This is a generated file!  Do not edit.\n"
+    ]
+    for cookie in cookies:
+        domain = cookie['domain']
+        flag = "TRUE" if domain.startswith(".") else "FALSE"
+        path = cookie['path']
+        secure = "TRUE" if cookie.get('secure') else "FALSE"
+        expiry = int(cookie.get('expires', 0))
+        name = cookie['name']
+        value = cookie['value']
+        lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
+    return "\n".join(lines)
 
-        except Exception as e:
-            await browser.close()
-            raise Exception(f"Login failed: {e}")
+# ================ YTDLP COOKIE CHECKER ================
 
-# ===== CHECK COOKIES =====
 async def check_cookies():
     try:
         opts = {"format": "bestaudio", "quiet": True, "cookiefile": FILE_PATH}
@@ -319,7 +308,8 @@ async def check_cookies():
     except Exception:
         return False
 
-# ===== GITHUB PUSH =====
+# ================ GITHUB PUSH =================
+
 async def update_github_file(new_content: str):
     url = f"https://api.github.com/repos/{REPO}/contents/{FILE_PATH}"
     headers = {
@@ -337,7 +327,7 @@ async def update_github_file(new_content: str):
             "branch": BRANCH,
             "committer": {
                 "name": "CookieBot",
-                "email": "bot@example.com"
+                "email": "princexrajput@gmail.com"
             },
             "content": base64.b64encode(new_content.encode()).decode(),
             "sha": sha
@@ -347,7 +337,8 @@ async def update_github_file(new_content: str):
         update.raise_for_status()
         return update.json()
 
-# ===== ALERT ON EXPIRY =====
+# ================ ALERT ON EXPIRY ================
+
 async def send_alert():
     is_alive = await check_cookies()
 
@@ -367,7 +358,23 @@ async def send_alert():
         except Exception as e:
             await bot.send_message(OWNER_ID, f"❌ Cookie update failed: {e}")
 
-# ===== COMMANDS =====
+# ================ BOT COMMANDS ================
+
+@bot.on_message(filters.command("getcookies"))
+async def get_cookies(_, message: Message):
+    if message.from_user.id != OWNER_ID:
+        return await message.reply("🚫 Unauthorized")
+
+    await message.reply("⏳ Cookies निकाल रहे हैं...")
+
+    try:
+        cookies_txt = await login_and_get_cookies()
+        with open("cookies.txt", "w", encoding="utf-8") as f:
+            f.write(cookies_txt)
+
+        await message.reply_document("cookies.txt", caption="✅ आपकी fresh cookies.txt फ़ाइल")
+    except Exception as e:
+        await message.reply(f"❌ Error: {e}")
 
 @bot.on_message(filters.command("cookies"))
 async def manual_check(_, message: Message):
@@ -402,6 +409,7 @@ async def generate_and_dm(_, message: Message):
         await bot.send_document(OWNER_ID, "cookies.txt", caption="✅ Here's your fresh cookies.txt file.")
     except Exception as e:
         await message.reply(f"❌ Failed to generate cookies: {e}")
+
 
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
