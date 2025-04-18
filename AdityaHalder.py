@@ -321,9 +321,10 @@ async def update_github_file(new_content: str):
         r = await client.get(url + f"?ref={BRANCH}", headers=headers)
         if r.status_code == 200:
             sha = r.json()["sha"]
-            else:
-                sha = None  # File doesn't exist, will be created
-                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            sha = None  # File doesn't exist yet
+
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         data = {
             "message": f"Auto-update cookies.txt [{now}]",
@@ -333,8 +334,10 @@ async def update_github_file(new_content: str):
                 "email": "princexrajput@gmail.com"
             },
             "content": base64.b64encode(new_content.encode()).decode(),
-            "sha": sha
         }
+
+        if sha:
+            data["sha"] = sha  # Only add sha if the file exists
 
         update = await client.put(url, headers=headers, json=data)
         update.raise_for_status()
