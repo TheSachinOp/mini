@@ -23,6 +23,8 @@ from pyrogram import filters
 from pyrogram.types import Message
 from yt_dlp import YoutubeDL
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 from git import Repo
 from git.exc import GitCommandError, InvalidGitRepositoryError
@@ -240,9 +242,8 @@ async def main():
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
 # ====== CONFIG ======
-
 GITHUB_TOKEN = "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"
-REPO = "ItsSanatani/Music"
+REPO = "TheSachinOp/mini"
 BRANCH = "aditya"
 FILE_PATH = "cookies.txt"
 
@@ -261,7 +262,7 @@ async def pull_and_restart():
 # ===== LOGIN & COOKIES GENERATOR =====
 async def login_and_get_cookies():
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)  # set headless=False for debugging
+        browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
         context = await browser.new_context()
         page = await context.new_page()
 
@@ -270,16 +271,13 @@ async def login_and_get_cookies():
             await page.fill("input[type='email']", EMAIL)
             await page.click("button:has-text('Next')")
 
-            try:
-                await page.wait_for_selector("input[type='password']", timeout=15000)
-                await page.fill("input[type='password']", PASSWORD)
-                await page.click("button:has-text('Next')")
-            except PlaywrightTimeoutError:
-                raise Exception("Password input not found — possible CAPTCHA or incorrect email.")
+            await page.wait_for_selector("input[type='password']", timeout=30000)
+            await page.fill("input[type='password']", PASSWORD)
+            await page.click("button:has-text('Next')")
 
             await page.wait_for_url("https://www.youtube.com/*", timeout=60000)
-
             cookies = await context.cookies("https://www.youtube.com")
+
             await browser.close()
 
             lines = [
@@ -287,7 +285,6 @@ async def login_and_get_cookies():
                 "# http://curl.haxx.se/rfc/cookie_spec.html",
                 "# This is a generated file!  Do not edit.\n"
             ]
-
             for cookie in cookies:
                 domain = cookie['domain']
                 flag = "TRUE" if domain.startswith(".") else "FALSE"
@@ -297,7 +294,6 @@ async def login_and_get_cookies():
                 name = cookie['name']
                 value = cookie['value']
                 lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
-
             return "\n".join(lines)
 
         except Exception as e:
@@ -332,7 +328,7 @@ async def update_github_file(new_content: str):
             "branch": BRANCH,
             "committer": {
                 "name": "CookieBot",
-                "email": "bot@example.com"
+                "email": "princexrajput@gmail.com"
             },
             "content": base64.b64encode(new_content.encode()).decode(),
             "sha": sha
@@ -342,7 +338,7 @@ async def update_github_file(new_content: str):
         update.raise_for_status()
         return update.json()
 
-# ===== ALERT ON EXPIRY =====
+# ===== COOKIE AUTO CHECK =====
 async def send_alert():
     is_alive = await check_cookies()
 
@@ -350,7 +346,6 @@ async def send_alert():
         await bot.send_message(OWNER_ID, "✅ Cookies are alive.")
     else:
         await bot.send_message(OWNER_ID, "⚠️ Cookies expired. Replacing...")
-
         try:
             new_cookies = await login_and_get_cookies()
             with open(FILE_PATH, "w", encoding="utf-8") as f:
@@ -387,17 +382,15 @@ async def force_update(_, message: Message):
 async def generate_and_dm(_, message: Message):
     if message.from_user.id != OWNER_ID:
         return await message.reply("🚫 Unauthorized")
-
     await message.reply("⏳ Generating fresh cookies...")
     try:
         cookies = await login_and_get_cookies()
         with open("cookies.txt", "w", encoding="utf-8") as f:
             f.write(cookies)
-
         await bot.send_document(OWNER_ID, "cookies.txt", caption="✅ Here's your fresh cookies.txt file.")
     except Exception as e:
         await message.reply(f"❌ Failed to generate cookies: {e}")
-        
+
 #=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×=×
 
 
