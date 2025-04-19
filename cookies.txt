@@ -2,7 +2,7 @@
 # http://curl.haxx.se/rfc/cookie_spec.html
 # This is a generated file!  Do not edit.
 
-.youtube.com	TRUE	/	TRUE	-1	YSC	JwdeDomlUNw
-.youtube.com	TRUE	/	TRUE	1779141145	__Secure-YEC	CgthbWEwVGVHeEc0QSiak4vABjInCgJJVBIhEh0SGwsMDg8QERITFBUWFxgZGhscHR4fICEiIyQlJiBa
-.youtube.com	TRUE	/	TRUE	1779141147	VISITOR_PRIVACY_METADATA	CgJJVBIhEh0SGwsMDg8QERITFBUWFxgZGhscHR4fICEiIyQlJiBa
-.youtube.com	TRUE	/	TRUE	1779573149	PREF	tz=UTC
+.youtube.com	TRUE	/	TRUE	-1	YSC	Za0TwBbJHLk
+.youtube.com	TRUE	/	TRUE	1779208525	__Secure-YEC	CgtVMHNtOFFSbEJkRSjOoY_ABjInCgJJVBIhEh0SGwsMDg8QERITFBUWFxgZGhscHR4fICEiIyQlJiAR
+.youtube.com	TRUE	/	TRUE	1779208527	VISITOR_PRIVACY_METADATA	CgJJVBIhEh0SGwsMDg8QERITFBUWFxgZGhscHR4fICEiIyQlJiAR
+.youtube.com	TRUE	/	TRUE	1779640529	PREF	tz=UTC
